@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>診断結果（簡易）</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+.result-container{
+  display:flex;
+  gap:25px;
+  align-items:flex-start;
+  margin-top:20px;
+}
+
+.left-panel{
+  flex:1;
+}
+
+.right-panel{
+  flex:1;
+  background:#f5f5f5;
+  padding:20px;
+  border-radius:10px;
+}
+
+.book-card{
+  background:white;
+  padding:20px;
+  margin-bottom:20px;
+  border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.08);
+}
+
+.book-card h3{
+  margin-top:0;
+  margin-bottom:10px;
+}
+
+.book-card p{
+  line-height:1.7;
+}
+
+/* PC */
+
+@media (min-width:768px){
+
+  .result-container{
+    flex-direction:row;
+  }
+
+  .left-panel{
+    width:50%;
+  }
+
+  .right-panel{
+    width:50%;
+    position:sticky;
+    top:20px;
+  }
+
+}
+
+/* スマホ */
+
+@media (max-width:767px){
+
+  .result-container{
+    flex-direction:column;
+    gap:25px;
+  }
+
+  .left-panel,
+  .right-panel{
+    width:100%;
+  }
+
+  .right-panel{
+    padding:20px;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>診断結果（簡易）</h1>
+
+<div class="result-container">
+
+  <div class="left-panel">
+    <div id="chart"></div>
+  </div>
+
+  <div class="right-panel">
+    <div id="result"></div>
+  </div>
+
+</div>
+
+<script>
+
+/* 前ページからデータ取得 */
+
+let score = JSON.parse(localStorage.getItem("poms_score"));
+let level = localStorage.getItem("poms_level");
+
+/* 対義語 */
+
+const labels={
+ tension:["リラックス","緊張"],
+ depression:["前向き","落ち込み"],
+ anger:["穏やか","怒り"],
+ vigor:["無気力","活気"],
+ fatigue:["回復","疲労"],
+ confusion:["明確","混乱"],
+ esteem:["自信なし","自信あり"]
+};
+
+/* 心理状態グラフ */
+
+function createChart(){
+
+ let html="<h3>心理状態</h3>";
+
+ for(let k in score){
+
+  let width=(score[k]+1)*50;
+
+  let color=
+    score[k]>0
+      ? "#f44336"
+      : "#4CAF50";
+
+  html+=`
+    <div>
+      ${labels[k][0]} ↔ ${labels[k][1]}
+    </div>
+
+    <div class="bar">
+      <div class="fill"
+           style="width:${width}%;
+           background:${color}">
+      </div>
+    </div>
+  `;
+ }
+
+ return html;
+}
+
+/* 距離計算 */
+
+function calcDistance(after){
+
+ let d=0;
+
+ if(after.tension>0.2)
+   d+=(after.tension)**2;
+
+ if(after.depression>0)
+   d+=(after.depression)**2;
+
+ if(after.fatigue>0)
+   d+=(after.fatigue)**2;
+
+ if(after.confusion>0)
+   d+=(after.confusion)**2;
+
+ if(after.vigor<0.5)
+   d+=(0.5-after.vigor)**2;
+
+ if(after.esteem<0.6)
+   d+=(0.6-after.esteem)**2;
+
+ return d;
+}
+
+/* 推薦理由 */
+
+function generateReason(after){
+
+ let r=[];
+
+ if(after.fatigue<score.fatigue)
+   r.push("疲れを癒します");
+
+ if(after.tension<score.tension)
+   r.push("リラックスできます");
+
+ if(after.depression<score.depression)
+   r.push("気分を前向きにします");
+
+ if(after.vigor>score.vigor &&
+    score.vigor<0){
+   r.push("やる気を高めます");
+ }
+
+ if(after.esteem>score.esteem &&
+    score.esteem<0.5){
+   r.push("自信を高めます");
+ }
+
+ if(r.length===0){
+   r.push("状態をバランスよく整えます");
+ }
+
+ return r.join("・");
+}
+
+/* 実行 */
+
+fetch("books.json")
+.then(r=>r.json())
+.then(books=>{
+
+ document.getElementById("chart").innerHTML=
+   createChart();
+
+ let results=books
+ .map(b=>{
+
+   if(level==="easy" &&
+      b.level==="hard")
+      return null;
+
+   if(level==="normal" &&
+      b.level==="hard")
+      return null;
+
+   let after={};
+
+   for(let k in score){
+     after[k]=(score[k]+b[k])/2;
+   }
+
+   return{
+     title:b.title,
+     dist:calcDistance(after),
+     after:after
+   };
+
+ })
+ .filter(x=>x!==null);
+
+ results.sort((a,b)=>
+   a.dist-b.dist
+ );
+
+ let html="<h3>おすすめの本</h3>";
+
+ html+=`
+   <p>読書レベル：${level}</p>
+ `;
+
+ results.slice(0,3).forEach((b,i)=>{
+
+   html+=`
+   <div class="book-card">
+
+     <h3>
+       ${i+1}位：${b.title}
+     </h3>
+
+     <p>
+       👉 ${generateReason(b.after)}
+     </p>
+
+   </div>
+   `;
+ });
+
+ document.getElementById("result").innerHTML=
+   html;
+
+});
+
+</script>
+
+</body>
+</html>

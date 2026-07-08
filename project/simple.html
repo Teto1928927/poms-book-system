@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>POMS簡易版</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+#questions{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+
+.question{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  background:#f5f5f5;
+  padding:12px;
+  border-radius:8px;
+  min-height:100px;
+}
+
+.question span{
+  text-align:center;
+  margin-bottom:10px;
+}
+
+#bottom{
+  display:flex;
+  justify-content:center;
+  margin-top:30px;
+}
+
+button{
+  width:250px;
+  padding:15px;
+  font-size:18px;
+  background:#4CAF50;
+  color:white;
+  border:none;
+  border-radius:10px;
+}
+
+/* タブレット */
+
+@media (max-width:900px){
+
+  #questions{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+}
+
+/* スマホ */
+
+@media (max-width:767px){
+
+  body{
+    padding-top:20px;
+    padding-bottom:50px;
+  }
+
+  h1{
+    text-align:center;
+    font-size:28px;
+    margin-bottom:25px;
+  }
+
+  #questions{
+    grid-template-columns:1fr;
+    gap:15px;
+  }
+
+  .question{
+    padding:15px;
+    min-height:auto;
+  }
+
+  .question span{
+    font-size:16px;
+    margin-bottom:10px;
+  }
+
+  select{
+    width:100%;
+    height:48px;
+    font-size:16px;
+  }
+
+  #bottom{
+    margin-top:30px;
+  }
+
+  button{
+    width:100%;
+    min-height:56px;
+    font-size:18px;
+  }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>POMS簡易診断</h1>
+
+<div id="questions"></div>
+
+<div id="bottom">
+  <button onclick="recommend()">結果を見る</button>
+</div>
+
+<script>
+
+const questions = [
+ {text:"不安を感じる",type:"tension"},
+ {text:"気分が沈んでいる",type:"depression"},
+ {text:"イライラしている",type:"anger"},
+ {text:"元気がある",type:"vigor"},
+ {text:"疲れている",type:"fatigue"},
+ {text:"集中できない",type:"confusion"},
+ {text:"自信がある",type:"esteem"}
+];
+
+const container = document.getElementById("questions");
+
+questions.forEach((q,i)=>{
+
+ let div=document.createElement("div");
+
+ div.className="question";
+
+ div.innerHTML=`
+  <span>${q.text}</span>
+
+  <select id="q${i}">
+    <option value="0">全くない</option>
+    <option value="1">少しある</option>
+    <option value="2">まあまあある</option>
+    <option value="3">かなりある</option>
+    <option value="4">非常にある</option>
+  </select>
+ `;
+
+ container.appendChild(div);
+
+});
+
+function recommend(){
+
+ let score={
+  tension:0,
+  depression:0,
+  anger:0,
+  vigor:0,
+  fatigue:0,
+  confusion:0,
+  esteem:0
+ };
+
+ questions.forEach((q,i)=>{
+  score[q.type]+=parseInt(
+    document.getElementById(`q${i}`).value
+  );
+ });
+
+ for(let k in score){
+  score[k]=(score[k]-2)/2;
+ }
+
+ localStorage.setItem(
+  "poms_score",
+  JSON.stringify(score)
+ );
+
+ location.href="result_simple.html";
+
+}
+
+</script>
+
+</body>
+</html>

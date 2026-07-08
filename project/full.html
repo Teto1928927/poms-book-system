@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>POMS2（40問）</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+#questions{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:8px;
+}
+
+.question{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:#f5f5f5;
+  padding:8px;
+  border-radius:8px;
+  min-height:90px;
+}
+
+.question span{
+  text-align:center;
+  margin-bottom:5px;
+}
+
+select{
+  width:100%;
+}
+
+#bottom{
+  display:flex;
+  justify-content:center;
+  margin-top:30px;
+}
+
+button{
+  width:320px;
+  padding:15px;
+  font-size:18px;
+  border-radius:10px;
+  background:#4CAF50;
+  color:white;
+  border:none;
+}
+
+/* タブレット */
+
+@media (max-width:1200px){
+
+  #questions{
+    grid-template-columns:repeat(4,1fr);
+  }
+
+}
+
+/* スマホ */
+
+@media (max-width:767px){
+
+  body{
+    padding-top:20px;
+    padding-bottom:50px;
+  }
+
+  h1{
+    text-align:center;
+    font-size:28px;
+    margin-bottom:25px;
+  }
+
+  #questions{
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+  }
+
+  .question{
+    min-height:120px;
+    padding:12px;
+    font-size:14px;
+  }
+
+  .question span{
+    font-size:14px;
+    line-height:1.4;
+  }
+
+  select{
+    height:42px;
+    font-size:15px;
+  }
+
+  button{
+    width:100%;
+    min-height:56px;
+    font-size:18px;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>POMS2（40問）</h1>
+
+<div id="questions"></div>
+
+<div id="bottom">
+  <button onclick="recommend()">結果を見る</button>
+</div>
+
+<script>
+
+const questions = [
+ {text:"落ち着かない", type:"tension"},
+ {text:"不安を感じる", type:"tension"},
+ {text:"緊張している", type:"tension"},
+ {text:"心配している", type:"tension"},
+ {text:"そわそわする", type:"tension"},
+ {text:"神経が高ぶる", type:"tension"},
+
+ {text:"気分が沈んでいる", type:"depression"},
+ {text:"悲しい", type:"depression"},
+ {text:"やる気が出ない", type:"depression"},
+ {text:"絶望感がある", type:"depression"},
+ {text:"無価値に感じる", type:"depression"},
+ {text:"落ち込んでいる", type:"depression"},
+
+ {text:"イライラしている", type:"anger"},
+ {text:"腹が立つ", type:"anger"},
+ {text:"怒りっぽい", type:"anger"},
+ {text:"不機嫌だ", type:"anger"},
+ {text:"敵意を感じる", type:"anger"},
+ {text:"短気だ", type:"anger"},
+
+ {text:"元気がある", type:"vigor"},
+ {text:"活力がある", type:"vigor"},
+ {text:"生き生きしている", type:"vigor"},
+ {text:"調子が良い", type:"vigor"},
+ {text:"エネルギーがある", type:"vigor"},
+ {text:"やる気がある", type:"vigor"},
+
+ {text:"疲れている", type:"fatigue"},
+ {text:"だるい", type:"fatigue"},
+ {text:"体が重い", type:"fatigue"},
+ {text:"眠い", type:"fatigue"},
+ {text:"消耗している", type:"fatigue"},
+ {text:"ぐったりしている", type:"fatigue"},
+
+ {text:"頭が混乱している", type:"confusion"},
+ {text:"集中できない", type:"confusion"},
+ {text:"考えがまとまらない", type:"confusion"},
+ {text:"ぼんやりしている", type:"confusion"},
+ {text:"判断が鈍い", type:"confusion"},
+
+ {text:"自信がある", type:"esteem"},
+ {text:"価値があると感じる", type:"esteem"},
+ {text:"有能だと思う", type:"esteem"},
+ {text:"自分を信頼できる", type:"esteem"},
+ {text:"うまくやれている", type:"esteem"}
+];
+
+const container = document.getElementById("questions");
+
+questions.forEach((q,i)=>{
+
+  let div = document.createElement("div");
+  div.className = "question";
+
+  div.innerHTML = `
+    <span>${i+1}. ${q.text}</span>
+
+    <select id="q${i}">
+      <option value="0">全くない</option>
+      <option value="1">少しある</option>
+      <option value="2">まあまあある</option>
+      <option value="3">かなりある</option>
+      <option value="4">非常にある</option>
+    </select>
+  `;
+
+  container.appendChild(div);
+
+});
+
+function recommend(){
+
+  let score = {
+    tension:0,
+    depression:0,
+    anger:0,
+    vigor:0,
+    fatigue:0,
+    confusion:0,
+    esteem:0
+  };
+
+  questions.forEach((q,i)=>{
+
+    score[q.type] += parseInt(
+      document.getElementById(`q${i}`).value
+    );
+
+  });
+
+  score.tension=(score.tension/6-2)/2;
+  score.depression=(score.depression/6-2)/2;
+  score.anger=(score.anger/6-2)/2;
+  score.vigor=(score.vigor/6-2)/2;
+  score.fatigue=(score.fatigue/6-2)/2;
+  score.confusion=(score.confusion/5-2)/2;
+  score.esteem=(score.esteem/5-2)/2;
+
+  localStorage.setItem(
+    "poms_score",
+    JSON.stringify(score)
+  );
+
+  location.href="result.html";
+
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,186 @@
+/* =========================
+   共通設定
+========================= */
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding-top: 15px;
+  line-height: 1.6;
+}
+
+h1 {
+  text-align: center;
+  margin-top: 10px;
+  margin-bottom: 30px;
+}
+
+h3 {
+  margin-top: 0;
+}
+
+/* =========================
+   質問画面共通
+========================= */
+
+.question {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.question span {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+select {
+  width: 100%;
+  max-width: 180px;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* =========================
+   結果画面
+========================= */
+
+.result-container {
+  display: flex;
+  gap: 25px;
+  align-items: flex-start;
+  margin-top: 20px;
+}
+
+.left-panel {
+  flex: 1;
+}
+
+.right-panel {
+  flex: 1;
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+/* =========================
+   グラフ
+========================= */
+
+.bar {
+  height: 24px;
+  background: #dddddd;
+  border-radius: 12px;
+  margin: 8px 0 18px 0;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 12px;
+}
+
+/* =========================
+   おすすめ本カード
+========================= */
+
+.book-card {
+  background: white;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.book-card h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333333;
+}
+
+.book-card p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+/* =========================
+   PC表示
+========================= */
+
+@media (min-width: 768px) {
+
+  .result-container {
+    flex-direction: row;
+  }
+
+  .left-panel {
+    width: 50%;
+  }
+
+  .right-panel {
+    width: 50%;
+    position: sticky;
+    top: 20px;
+  }
+
+}
+
+/* =========================
+   スマホ表示
+========================= */
+
+@media (max-width: 767px) {
+
+  body {
+    margin: 15px;
+    padding-top: 25px;
+    padding-bottom: 50px;
+    line-height: 1.8;
+  }
+
+  h1 {
+    font-size: 28px;
+    margin-bottom: 25px;
+  }
+
+  .result-container {
+    flex-direction: column;
+    gap: 25px;
+  }
+
+  .left-panel,
+  .right-panel {
+    width: 100%;
+  }
+
+  .right-panel {
+    padding: 20px;
+  }
+
+  .book-card {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .bar {
+    height: 28px;
+  }
+
+  select {
+    width: 100%;
+    max-width: none;
+    height: 48px;
+    font-size: 16px;
+  }
+
+  button {
+    width: 100%;
+    min-height: 56px;
+    font-size: 18px;
+  }
+
+}
