@@ -1,283 +1,761 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>診断結果（簡易）</title>
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>診断結果（簡易版）</title>
 
 <link rel="stylesheet" href="style.css">
 
 <style>
 
-.result-container{
-  display:flex;
-  gap:25px;
-  align-items:flex-start;
-  margin-top:20px;
+.result-container {
+  display: flex;
+  gap: 25px;
+  align-items: flex-start;
+  margin-top: 20px;
 }
 
-.left-panel{
-  flex:1;
+.left-panel {
+  flex: 1;
 }
 
-.right-panel{
-  flex:1;
-  background:#f5f5f5;
-  padding:20px;
-  border-radius:10px;
+.right-panel {
+  flex: 1;
+
+  background: #f5f5f5;
+
+  padding: 20px;
+
+  border-radius: 10px;
 }
 
-.book-card{
-  background:white;
-  padding:20px;
-  margin-bottom:20px;
-  border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.08);
+.book-card {
+  background: white;
+
+  padding: 20px;
+
+  margin-bottom: 20px;
+
+  border-radius: 10px;
+
+  box-shadow:
+    0 2px 6px rgba(0,0,0,0.08);
 }
 
-.book-card h3{
-  margin-top:0;
-  margin-bottom:10px;
+.demo-area {
+  margin-top: 40px;
+
+  padding: 20px;
+
+  background: #eef6ff;
+
+  border:
+    2px solid #4a90e2;
+
+  border-radius: 10px;
 }
 
-.book-card p{
-  line-height:1.7;
+.demo-item {
+  background: white;
+
+  padding: 12px;
+
+  margin-bottom: 10px;
+
+  border-radius: 8px;
 }
 
-/* PC */
 
-@media (min-width:768px){
+@media (min-width: 768px) {
 
-  .result-container{
-    flex-direction:row;
+  .left-panel {
+    width: 50%;
   }
 
-  .left-panel{
-    width:50%;
-  }
-
-  .right-panel{
-    width:50%;
-    position:sticky;
-    top:20px;
+  .right-panel {
+    width: 50%;
   }
 
 }
 
-/* スマホ */
 
-@media (max-width:767px){
+@media (max-width: 767px) {
 
-  .result-container{
-    flex-direction:column;
-    gap:25px;
+  .result-container {
+    flex-direction: column;
   }
 
   .left-panel,
-  .right-panel{
-    width:100%;
-  }
-
-  .right-panel{
-    padding:20px;
+  .right-panel {
+    width: 100%;
   }
 
 }
 
 </style>
+
 </head>
+
 
 <body>
 
-<h1>診断結果（簡易）</h1>
+
+<h1>診断結果（簡易版）</h1>
+
 
 <div class="result-container">
 
+
   <div class="left-panel">
+
     <div id="chart"></div>
+
   </div>
 
+
   <div class="right-panel">
+
     <div id="result"></div>
+
   </div>
+
 
 </div>
 
+
+<div id="demo"></div>
+
+
 <script>
 
-/* 前ページからデータ取得 */
 
-let score = JSON.parse(localStorage.getItem("poms_score"));
-let level = localStorage.getItem("poms_level");
+// ========================================
+// 7尺度
+// ========================================
 
-/* 対義語 */
+const scoreKeys = [
 
-const labels={
- tension:["リラックス","緊張"],
- depression:["前向き","落ち込み"],
- anger:["穏やか","怒り"],
- vigor:["無気力","活気"],
- fatigue:["回復","疲労"],
- confusion:["明確","混乱"],
- esteem:["自信なし","自信あり"]
+  "tension",
+
+  "depression",
+
+  "anger",
+
+  "vigor",
+
+  "fatigue",
+
+  "confusion",
+
+  "friendliness"
+
+];
+
+
+// ========================================
+// 診断結果取得
+// ========================================
+
+let score =
+  JSON.parse(
+    localStorage.getItem("poms_score")
+  );
+
+
+if (!score) {
+
+  score = {};
+
+}
+
+
+scoreKeys.forEach(function(k) {
+
+  if (
+    score[k] === undefined ||
+    score[k] === null ||
+    isNaN(Number(score[k]))
+  ) {
+
+    score[k] = 0;
+
+  }
+
+});
+
+
+let level =
+  localStorage.getItem("poms_level");
+
+
+// ========================================
+// グラフ表示
+// ========================================
+
+const labels = {
+
+  tension:
+    ["リラックス", "緊張"],
+
+  depression:
+    ["前向き", "落ち込み"],
+
+  anger:
+    ["穏やか", "怒り"],
+
+  vigor:
+    ["無気力", "活気"],
+
+  fatigue:
+    ["回復", "疲労"],
+
+  confusion:
+    ["明確", "混乱"],
+
+  friendliness:
+    ["親しみがない", "親しみがある"]
+
 };
 
-/* 心理状態グラフ */
 
-function createChart(){
+const scaleNames = {
 
- let html="<h3>心理状態</h3>";
+  tension:
+    "緊張・不安",
 
- for(let k in score){
+  depression:
+    "抑うつ・落込み",
 
-  let width=(score[k]+1)*50;
+  anger:
+    "怒り・敵意",
 
-  let color=
-    score[k]>0
-      ? "#f44336"
-      : "#4CAF50";
+  vigor:
+    "活気・活力",
 
-  html+=`
-    <div>
-      ${labels[k][0]} ↔ ${labels[k][1]}
-    </div>
+  fatigue:
+    "疲労・無気力",
 
-    <div class="bar">
-      <div class="fill"
-           style="width:${width}%;
-           background:${color}">
-      </div>
-    </div>
-  `;
- }
+  confusion:
+    "混乱・当惑",
 
- return html;
+  friendliness:
+    "友好"
+
+};
+
+
+// ========================================
+// 理想心理状態
+// ========================================
+
+const ideal = {
+
+  tension: -0.3,
+
+  depression: -0.5,
+
+  anger: -0.5,
+
+  vigor: 0.5,
+
+  fatigue: -0.4,
+
+  confusion: -0.4,
+
+  friendliness: 0.4
+
+};
+
+
+// ========================================
+// 心理状態グラフ
+// ========================================
+
+function createChart() {
+
+  let html =
+    "<h3>心理状態</h3>";
+
+
+  scoreKeys.forEach(function(k) {
+
+    let width =
+      (Number(score[k]) + 1) * 50;
+
+
+    width =
+      Math.max(
+        0,
+        Math.min(
+          100,
+          width
+        )
+      );
+
+
+    const color =
+      Number(score[k]) > 0
+        ? "#f44336"
+        : "#4CAF50";
+
+
+    html +=
+
+      "<div>" +
+
+        labels[k][0] +
+
+        " ↔ " +
+
+        labels[k][1] +
+
+      "</div>" +
+
+
+      '<div class="bar">' +
+
+        '<div class="fill" ' +
+
+          'style="width:' +
+
+          width +
+
+          '%;background:' +
+
+          color +
+
+          ';">' +
+
+        "</div>" +
+
+      "</div>";
+
+  });
+
+
+  return html;
+
 }
 
-/* 距離計算 */
 
-function calcDistance(after){
+// ========================================
+// 理想状態との距離
+// ========================================
 
- let d=0;
+function calcDistance(after) {
 
- if(after.tension>0.2)
-   d+=(after.tension)**2;
+  let distance = 0;
 
- if(after.depression>0)
-   d+=(after.depression)**2;
 
- if(after.fatigue>0)
-   d+=(after.fatigue)**2;
+  scoreKeys.forEach(function(k) {
 
- if(after.confusion>0)
-   d+=(after.confusion)**2;
+    const difference =
+      Number(after[k]) -
+      Number(ideal[k]);
 
- if(after.vigor<0.5)
-   d+=(0.5-after.vigor)**2;
 
- if(after.esteem<0.6)
-   d+=(0.6-after.esteem)**2;
+    distance +=
+      difference *
+      difference;
 
- return d;
+  });
+
+
+  return distance;
+
 }
 
-/* 推薦理由 */
 
-function generateReason(after){
+// ========================================
+// 推薦理由
+// ========================================
 
- let r=[];
+function generateReason(after) {
 
- if(after.fatigue<score.fatigue)
-   r.push("疲れを癒します");
+  const reasons = [];
 
- if(after.tension<score.tension)
-   r.push("リラックスできます");
 
- if(after.depression<score.depression)
-   r.push("気分を前向きにします");
+  if (
+    after.fatigue <
+    score.fatigue
+  ) {
 
- if(after.vigor>score.vigor &&
-    score.vigor<0){
-   r.push("やる気を高めます");
- }
+    reasons.push(
+      "疲れを癒す方向です"
+    );
 
- if(after.esteem>score.esteem &&
-    score.esteem<0.5){
-   r.push("自信を高めます");
- }
+  }
 
- if(r.length===0){
-   r.push("状態をバランスよく整えます");
- }
 
- return r.join("・");
+  if (
+    after.tension <
+    score.tension
+  ) {
+
+    reasons.push(
+      "リラックスする方向です"
+    );
+
+  }
+
+
+  if (
+    after.depression <
+    score.depression
+  ) {
+
+    reasons.push(
+      "気分を前向きにする方向です"
+    );
+
+  }
+
+
+  if (
+    after.anger <
+    score.anger
+  ) {
+
+    reasons.push(
+      "気持ちを穏やかにする方向です"
+    );
+
+  }
+
+
+  if (
+    after.confusion <
+    score.confusion
+  ) {
+
+    reasons.push(
+      "考えを整理する方向です"
+    );
+
+  }
+
+
+  if (
+    after.vigor >
+    score.vigor
+  ) {
+
+    reasons.push(
+      "活気を高める方向です"
+    );
+
+  }
+
+
+  if (
+    after.friendliness >
+    score.friendliness
+  ) {
+
+    reasons.push(
+      "人への親しみを高める方向です"
+    );
+
+  }
+
+
+  if (
+    reasons.length === 0
+  ) {
+
+    reasons.push(
+      "理想状態に近い候補です"
+    );
+
+  }
+
+
+  return reasons.join("・");
+
 }
 
-/* 実行 */
+
+// ========================================
+// デモ表示
+// ========================================
+
+function createDemo() {
+
+  let html =
+
+    '<div class="demo-area">' +
+
+      "<h2>" +
+        "デモ用：現在値と基準値との差" +
+      "</h2>" +
+
+      "<p>" +
+        "差 ＝ 現在値 − 基準値" +
+      "</p>";
+
+
+  scoreKeys.forEach(function(k) {
+
+    const current =
+      Number(score[k]);
+
+
+    const target =
+      Number(ideal[k]);
+
+
+    const difference =
+      current - target;
+
+
+    html +=
+
+      '<div class="demo-item">' +
+
+        "<strong>" +
+          scaleNames[k] +
+        "</strong>" +
+
+        "<br>" +
+
+        "現在値：" +
+        current.toFixed(2) +
+
+        "<br>" +
+
+        "基準値：" +
+        target.toFixed(2) +
+
+        "<br>" +
+
+        "<strong>" +
+
+          "差：" +
+
+          (difference >= 0
+            ? "+"
+            : "") +
+
+          difference.toFixed(2) +
+
+        "</strong>" +
+
+      "</div>";
+
+  });
+
+
+  html +=
+
+      "<p>" +
+        "※推薦順位は読後予測値と基準値との総合距離で決定します。" +
+      "</p>" +
+
+    "</div>";
+
+
+  return html;
+
+}
+
+
+// ========================================
+// books.json読み込み
+// ========================================
 
 fetch("books.json")
-.then(r=>r.json())
-.then(books=>{
 
- document.getElementById("chart").innerHTML=
-   createChart();
+.then(function(response) {
 
- let results=books
- .map(b=>{
+  if (!response.ok) {
 
-   if(level==="easy" &&
-      b.level==="hard")
+    throw new Error(
+      "HTTP " +
+      response.status
+    );
+
+  }
+
+  return response.json();
+
+})
+
+.then(function(books) {
+
+
+  document.getElementById(
+    "chart"
+  ).innerHTML =
+    createChart();
+
+
+  const results = books
+
+  .map(function(book) {
+
+
+    if (
+      level === "easy" &&
+      book.level === "hard"
+    ) {
+
       return null;
 
-   if(level==="normal" &&
-      b.level==="hard")
+    }
+
+
+    if (
+      level === "normal" &&
+      book.level === "hard"
+    ) {
+
       return null;
 
-   let after={};
+    }
 
-   for(let k in score){
-     after[k]=(score[k]+b[k])/2;
-   }
 
-   return{
-     title:b.title,
-     dist:calcDistance(after),
-     after:after
-   };
+    const after = {};
 
- })
- .filter(x=>x!==null);
 
- results.sort((a,b)=>
-   a.dist-b.dist
- );
+    scoreKeys.forEach(function(k) {
 
- let html="<h3>おすすめの本</h3>";
+      const bookValue =
+        Number(
+          book[k] ?? 0
+        );
 
- html+=`
-   <p>読書レベル：${level}</p>
- `;
 
- results.slice(0,3).forEach((b,i)=>{
+      after[k] =
+        (
+          Number(score[k]) +
+          bookValue
+        ) / 2;
 
-   html+=`
-   <div class="book-card">
+    });
 
-     <h3>
-       ${i+1}位：${b.title}
-     </h3>
 
-     <p>
-      ${generateReason(b.after)}
-     </p>
+    return {
 
-   </div>
-   `;
- });
+      title:
+        book.title,
 
- document.getElementById("result").innerHTML=
-   html;
+      dist:
+        calcDistance(after),
+
+      after:
+        after
+
+    };
+
+  })
+
+  .filter(function(x) {
+
+    return x !== null;
+
+  });
+
+
+  results.sort(function(a, b) {
+
+    return a.dist - b.dist;
+
+  });
+
+
+  let html =
+    "<h3>おすすめの本</h3>";
+
+
+  if (level) {
+
+    html +=
+
+      "<p>" +
+        "読書レベル：" +
+        level +
+      "</p>";
+
+  }
+
+
+  results
+  .slice(0, 3)
+  .forEach(function(book, i) {
+
+    html +=
+
+      '<div class="book-card">' +
+
+        "<h3>" +
+
+          (i + 1) +
+
+          "位：" +
+
+          book.title +
+
+        "</h3>" +
+
+        "<p>" +
+
+          generateReason(
+            book.after
+          ) +
+
+        "</p>" +
+
+        "<p>" +
+
+          "<strong>" +
+
+            "デモ用 総合距離：" +
+
+            book.dist.toFixed(3) +
+
+          "</strong>" +
+
+        "</p>" +
+
+      "</div>";
+
+  });
+
+
+  document.getElementById(
+    "result"
+  ).innerHTML =
+    html;
+
+
+  document.getElementById(
+    "demo"
+  ).innerHTML =
+    createDemo();
+
+})
+
+.catch(function(error) {
+
+  console.error(
+    "books.json読み込みエラー:",
+    error
+  );
+
+
+  document.getElementById(
+    "result"
+  ).innerHTML =
+
+    "<p>" +
+      "books.jsonを読み込めませんでした。" +
+    "</p>";
 
 });
 

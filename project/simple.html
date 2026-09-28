@@ -5,103 +5,90 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>POMS簡易版</title>
+<title>気分チェック 簡易版</title>
 
 <link rel="stylesheet" href="style.css">
 
 <style>
 
-#questions{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:12px;
+#questions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
 }
 
-.question{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  background:#f5f5f5;
-  padding:12px;
-  border-radius:8px;
-  min-height:100px;
+.description {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-.question span{
-  text-align:center;
-  margin-bottom:10px;
+.question {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+
+  background: #f5f5f5;
+
+  padding: 12px;
+
+  border-radius: 8px;
+
+  min-height: 110px;
 }
 
-#bottom{
-  display:flex;
-  justify-content:center;
-  margin-top:30px;
+.question span {
+  text-align: center;
+  margin-bottom: 10px;
 }
 
-button{
-  width:250px;
-  padding:15px;
-  font-size:18px;
-  background:#4CAF50;
-  color:white;
-  border:none;
-  border-radius:10px;
+.question select {
+  width: 100%;
+  padding: 8px;
 }
 
-/* タブレット */
+#bottom {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+}
 
-@media (max-width:900px){
+button {
+  width: 250px;
+  padding: 15px;
+  font-size: 18px;
 
-  #questions{
-    grid-template-columns:repeat(2,1fr);
+  background: #4CAF50;
+  color: white;
+
+  border: none;
+  border-radius: 10px;
+
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+
+  #questions {
+    grid-template-columns: repeat(2, 1fr);
   }
 
 }
 
-/* スマホ */
+@media (max-width: 767px) {
 
-@media (max-width:767px){
-
-  body{
-    padding-top:20px;
-    padding-bottom:50px;
+  #questions {
+    grid-template-columns: 1fr;
   }
 
-  h1{
-    text-align:center;
-    font-size:28px;
-    margin-bottom:25px;
+  select {
+    height: 48px;
+    font-size: 16px;
   }
 
-  #questions{
-    grid-template-columns:1fr;
-    gap:15px;
-  }
-
-  .question{
-    padding:15px;
-    min-height:auto;
-  }
-
-  .question span{
-    font-size:16px;
-    margin-bottom:10px;
-  }
-
-  select{
-    width:100%;
-    height:48px;
-    font-size:16px;
-  }
-
-  #bottom{
-    margin-top:30px;
-  }
-
-  button{
-    width:100%;
-    min-height:56px;
-    font-size:18px;
+  button {
+    width: 100%;
+    min-height: 56px;
   }
 
 }
@@ -110,80 +97,211 @@ button{
 
 </head>
 
+
 <body>
 
-<h1>POMS簡易診断</h1>
+<h1>気分チェック 簡易版</h1>
+
+<p class="description">
+  今日を含めて過去1週間に、
+  次の気分をどの程度感じましたか？
+</p>
+
 
 <div id="questions"></div>
 
+
 <div id="bottom">
-  <button onclick="recommend()">結果を見る</button>
+
+  <button type="button" onclick="recommend()">
+    結果を見る
+  </button>
+
 </div>
+
 
 <script>
 
+// ========================================
+// 簡易版 7項目
+// ========================================
+
 const questions = [
- {text:"不安を感じる",type:"tension"},
- {text:"気分が沈んでいる",type:"depression"},
- {text:"イライラしている",type:"anger"},
- {text:"元気がある",type:"vigor"},
- {text:"疲れている",type:"fatigue"},
- {text:"集中できない",type:"confusion"},
- {text:"自信がある",type:"esteem"}
+
+  {
+    text: "不安を感じた",
+    type: "tension"
+  },
+
+  {
+    text: "気分が沈んでいた",
+    type: "depression"
+  },
+
+  {
+    text: "イライラしていた",
+    type: "anger"
+  },
+
+  {
+    text: "元気があった",
+    type: "vigor"
+  },
+
+  {
+    text: "疲れていた",
+    type: "fatigue"
+  },
+
+  {
+    text: "集中できなかった",
+    type: "confusion"
+  },
+
+  {
+    text: "人に親しみを感じた",
+    type: "friendliness"
+  }
+
 ];
 
-const container = document.getElementById("questions");
 
-questions.forEach((q,i)=>{
+// ========================================
+// 共通選択肢
+// ========================================
 
- let div=document.createElement("div");
+const options = [
 
- div.className="question";
+  ["", "選択してください"],
 
- div.innerHTML=`
-  <span>${q.text}</span>
+  ["0", "まったくなかった"],
 
-  <select id="q${i}">
-    <option value="0">全くない</option>
-    <option value="1">少しある</option>
-    <option value="2">まあまあある</option>
-    <option value="3">かなりある</option>
-    <option value="4">非常にある</option>
-  </select>
- `;
+  ["1", "少しあった"],
 
- container.appendChild(div);
+  ["2", "まあまああった"],
+
+  ["3", "かなりあった"],
+
+  ["4", "非常に多くあった"]
+
+];
+
+
+// ========================================
+// 質問を表示
+// ========================================
+
+const container =
+  document.getElementById("questions");
+
+
+questions.forEach(function(q, i) {
+
+  const div =
+    document.createElement("div");
+
+  div.className =
+    "question";
+
+
+  const label =
+    document.createElement("span");
+
+  label.textContent =
+    q.text;
+
+
+  const select =
+    document.createElement("select");
+
+  select.id =
+    "q" + i;
+
+
+  options.forEach(function(item) {
+
+    const option =
+      document.createElement("option");
+
+    option.value =
+      item[0];
+
+    option.textContent =
+      item[1];
+
+    select.appendChild(option);
+
+  });
+
+
+  div.appendChild(label);
+
+  div.appendChild(select);
+
+  container.appendChild(div);
 
 });
 
-function recommend(){
 
- let score={
-  tension:0,
-  depression:0,
-  anger:0,
-  vigor:0,
-  fatigue:0,
-  confusion:0,
-  esteem:0
- };
+// ========================================
+// 結果を計算
+// ========================================
 
- questions.forEach((q,i)=>{
-  score[q.type]+=parseInt(
-    document.getElementById(`q${i}`).value
+function recommend() {
+
+  const score = {
+
+    tension: 0,
+
+    depression: 0,
+
+    anger: 0,
+
+    vigor: 0,
+
+    fatigue: 0,
+
+    confusion: 0,
+
+    friendliness: 0
+
+  };
+
+
+  questions.forEach(function(q, i) {
+
+    const value =
+      document.getElementById(
+        "q" + i
+      ).value;
+
+
+    // 未入力
+    if (value === "") {
+
+      score[q.type] = 0;
+
+    }
+
+    // 回答済み
+    else {
+
+      score[q.type] =
+        (Number(value) - 2) / 2;
+
+    }
+
+  });
+
+
+  localStorage.setItem(
+    "poms_score",
+    JSON.stringify(score)
   );
- });
 
- for(let k in score){
-  score[k]=(score[k]-2)/2;
- }
 
- localStorage.setItem(
-  "poms_score",
-  JSON.stringify(score)
- );
-
- location.href="result_simple.html";
+  location.href =
+    "result_simple.html";
 
 }
 
