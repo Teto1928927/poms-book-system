@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>POMS本推薦</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+body{
+  text-align:center;
+  font-family:sans-serif;
+  margin-top:80px;
+  padding:20px;
+}
+
+button{
+  padding:20px;
+  margin:20px;
+  font-size:18px;
+  width:250px;
+  border-radius:10px;
+  border:none;
+  background:#4CAF50;
+  color:white;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#45a049;
+}
+
+select{
+  font-size:16px;
+  padding:10px;
+  width:250px;
+  border-radius:5px;
+}
+
+/* スマホ対応 */
+
+@media (max-width:767px){
+
+  body{
+    margin-top:30px;
+    padding:20px;
+  }
+
+  h1{
+    font-size:28px;
+    margin-bottom:25px;
+  }
+
+  h3{
+    margin-bottom:20px;
+  }
+
+  select{
+    width:100%;
+    height:50px;
+    font-size:16px;
+  }
+
+  button{
+    width:100%;
+    min-height:60px;
+    margin:10px 0;
+    font-size:18px;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>POMS本推薦システム</h1>
+
+<h3>読書レベルを選択</h3>
+
+<select id="level">
+  <option value="easy">あまり読まない</option>
+  <option value="normal">普通</option>
+  <option value="hard">よく読む</option>
+</select>
+
+<br><br>
+
+<p>モードを選択してください</p>
+
+<button onclick="go('simple.html')">
+  簡易版（短時間）
+</button>
+
+<button onclick="go('full.html')">
+  完全版（40問）
+</button>
+
+<script>
+
+function go(page){
+
+  let level = document.getElementById("level").value;
+
+  localStorage.setItem("poms_level", level);
+
+  location.href = page;
+}
+
+</script>
+
+</body>
+</html>

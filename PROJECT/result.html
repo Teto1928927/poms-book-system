@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>診断結果</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+.result-container {
+  display: flex;
+  gap: 25px;
+  align-items: flex-start;
+  margin-top: 20px;
+}
+
+.left-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+.right-panel {
+  flex: 1;
+  min-width: 0;
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.book-card {
+  background: white;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* ========================================
+   心理状態グラフ
+   中央を0として左右に伸びる
+======================================== */
+
+.chart-item {
+  width: 100%;
+  margin-bottom: 22px;
+}
+
+.chart-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.chart-labels span:first-child {
+  text-align: left;
+}
+
+.chart-labels span:last-child {
+  text-align: right;
+}
+
+.center-bar {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  background: #eeeeee;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* 中央の0位置 */
+.center-line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: #555555;
+  transform: translateX(-1px);
+  z-index: 2;
+}
+
+/* 現在値 */
+.value-bar {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  z-index: 1;
+}
+
+
+/* ========================================
+   エラー表示
+======================================== */
+
+.error-message {
+  padding: 20px;
+  background: #fff4f4;
+  border: 2px solid #e57373;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.error-message h3 {
+  margin-top: 0;
+  color: #c62828;
+}
+
+.reload-button {
+  margin-top: 10px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #4a90e2;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.reload-button:hover {
+  background: #357abd;
+}
+
+
+@media (max-width: 767px) {
+
+  .result-container {
+    flex-direction: column;
+  }
+
+  .left-panel,
+  .right-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<h1>診断結果</h1>
+
+
+<div class="result-container">
+
+  <div class="left-panel">
+
+    <div id="chart"></div>
+
+  </div>
+
+
+  <div class="right-panel">
+
+    <div id="result"></div>
+
+  </div>
+
+</div>
+<script>
+
+// ========================================
+// 7尺度
+// ========================================
+
+const scoreKeys = [
+  "tension",
+  "depression",
+  "anger",
+  "vigor",
+  "fatigue",
+  "confusion",
+  "friendliness"
+];
+
+
+// ========================================
+// 診断結果を取得
+// ========================================
+
+let score =
+  JSON.parse(
+    localStorage.getItem("poms_score")
+  );
+
+if (!score) {
+  score = {};
+}
+
+
+// ========================================
+// 値がない場合は0
+// ========================================
+
+scoreKeys.forEach(function(k) {
+
+  if (
+    score[k] === undefined ||
+    score[k] === null ||
+    isNaN(Number(score[k]))
+  ) {
+
+    score[k] = 0;
+
+  }
+
+});
+
+
+// ========================================
+// 読書レベル
+// ========================================
+
+let level =
+  localStorage.getItem("poms_level");
+
+
+// ========================================
+// グラフ表示名
+// ========================================
+
+const labels = {
+
+  tension:
+    ["リラックス", "緊張"],
+
+  depression:
+    ["前向き", "落ち込み"],
+
+  anger:
+    ["穏やか", "怒り"],
+
+  vigor:
+    ["無気力", "活気"],
+
+  fatigue:
+    ["回復", "疲労"],
+
+  confusion:
+    ["明確", "混乱"],
+
+  friendliness:
+    ["親しみがない", "親しみがある"]
+
+};
+
+
+// ========================================
+// 理想基準値
+// ========================================
+
+const ideal = {
+
+  tension: -0.3,
+
+  depression: -0.5,
+
+  anger: -0.5,
+
+  vigor: 0.5,
+
+  fatigue: -0.4,
+
+  confusion: -0.4,
+
+  friendliness: 0.4
+
+};
+
+
+// ========================================
+// 心理状態グラフ
+//
+// 中央を0として
+// マイナスは左
+// プラスは右
+// ========================================
+
+function createChart() {
+
+  let html =
+    "<h3>心理状態</h3>";
+
+
+  scoreKeys.forEach(function(k) {
+
+    let value =
+      Number(score[k]);
+
+
+    // -1 ～ +1 に制限
+    value =
+      Math.max(
+        -1,
+        Math.min(1, value)
+      );
+
+
+    // 片側50%の範囲で表示
+    const width =
+      Math.abs(value) * 50;
+
+
+    let barStyle = "";
+
+
+    if (value < 0) {
+
+      // 中央から左へ
+      barStyle =
+        "width:" +
+        width +
+        "%;" +
+
+        "right:50%;" +
+
+        "background:#4CAF50;";
+
+    }
+
+    else if (value > 0) {
+
+      // 中央から右へ
+      barStyle =
+        "width:" +
+        width +
+        "%;" +
+
+        "left:50%;" +
+
+        "background:#f44336;";
+
+    }
+
+    else {
+
+      // 0の場合はバーなし
+      barStyle =
+        "width:0;" +
+        "left:50%;";
+
+    }
+
+
+    html +=
+
+      '<div class="chart-item">' +
+
+        '<div class="chart-labels">' +
+
+          "<span>" +
+            labels[k][0] +
+          "</span>" +
+
+          "<span>" +
+            labels[k][1] +
+          "</span>" +
+
+        "</div>" +
+
+
+        '<div class="center-bar">' +
+
+          '<div class="center-line"></div>' +
+
+          '<div class="value-bar" ' +
+            'style="' +
+            barStyle +
+            '">' +
+          "</div>" +
+
+        "</div>" +
+
+      "</div>";
+
+  });
+
+
+  return html;
+
+}
+
+
+// ========================================
+// 理想状態との総合距離
+// ========================================
+
+function calcDistance(after) {
+
+  let distance = 0;
+
+
+  scoreKeys.forEach(function(k) {
+
+    const difference =
+      Number(after[k]) -
+      Number(ideal[k]);
+
+
+    distance +=
+      difference *
+      difference;
+
+  });
+
+
+  return distance;
+
+}
+
+
+// ========================================
+// 推薦理由
+// ========================================
+
+function generateReason(after) {
+
+  const reasons = [];
+
+
+  if (after.fatigue < score.fatigue) {
+
+    reasons.push(
+      "疲れを癒す方向です"
+    );
+
+  }
+
+
+  if (after.tension < score.tension) {
+
+    reasons.push(
+      "リラックスする方向です"
+    );
+
+  }
+
+
+  if (
+    after.depression <
+    score.depression
+  ) {
+
+    reasons.push(
+      "気分を前向きにする方向です"
+    );
+
+  }
+
+
+  if (after.anger < score.anger) {
+
+    reasons.push(
+      "気持ちを穏やかにする方向です"
+    );
+
+  }
+
+
+  if (
+    after.confusion <
+    score.confusion
+  ) {
+
+    reasons.push(
+      "考えを整理する方向です"
+    );
+
+  }
+
+
+  if (after.vigor > score.vigor) {
+
+    reasons.push(
+      "活気を高める方向です"
+    );
+
+  }
+
+
+  if (
+    after.friendliness >
+    score.friendliness
+  ) {
+
+    reasons.push(
+      "人への親しみを高める方向です"
+    );
+
+  }
+
+
+  if (reasons.length === 0) {
+
+    reasons.push(
+      "理想状態に近い候補です"
+    );
+
+  }
+
+
+  return reasons.join("・");
+
+}
+
+
+// ========================================
+// 診断結果を先に表示
+//
+// books.jsonの読み込みには
+// 依存させない
+// ========================================
+
+document.getElementById(
+  "chart"
+).innerHTML =
+  createChart();
+
+
+// ========================================
+// books.jsonを取得
+// ========================================
+
+fetch("books.json")
+
+
+.then(function(response) {
+
+  if (!response.ok) {
+
+    throw new Error(
+      "HTTP " +
+      response.status
+    );
+
+  }
+
+
+  return response.json();
+
+})
+
+
+.then(function(books) {
+
+
+  // ======================================
+  // 推薦候補を計算
+  // ======================================
+
+  const results = books
+
+
+  .map(function(book) {
+
+
+    // 読書レベルによる制限
+    if (
+      level === "easy" &&
+      book.level === "hard"
+    ) {
+
+      return null;
+
+    }
+
+
+    if (
+      level === "normal" &&
+      book.level === "hard"
+    ) {
+
+      return null;
+
+    }
+
+
+    // ====================================
+    // 読後の心理状態を予測
+    // ====================================
+
+    const after = {};
+
+
+    scoreKeys.forEach(function(k) {
+
+      const bookValue =
+        Number(
+          book[k] ?? 0
+        );
+
+
+      after[k] =
+
+        (
+          Number(score[k]) +
+          bookValue
+        ) / 2;
+
+    });
+
+
+    return {
+
+      title:
+        book.title,
+
+      dist:
+        calcDistance(after),
+
+      after:
+        after
+
+    };
+
+  })
+
+
+  .filter(function(item) {
+
+    return item !== null;
+
+  });
+
+
+  // ======================================
+  // 総合距離が小さい順
+  // ======================================
+
+  results.sort(function(a, b) {
+
+    return a.dist - b.dist;
+
+  });
+
+
+  // ======================================
+  // 推薦結果表示
+  // ======================================
+
+  let html =
+    "<h3>おすすめの本</h3>";
+
+
+  if (level) {
+
+    html +=
+
+      "<p>" +
+
+        "読書レベル：" +
+        level +
+
+      "</p>";
+
+  }
+
+
+  results
+
+  .slice(0, 3)
+
+  .forEach(function(book, index) {
+
+    html +=
+
+      '<div class="book-card">' +
+
+        "<h3>" +
+
+          (index + 1) +
+
+          "位：" +
+
+          book.title +
+
+        "</h3>" +
+
+
+        "<p>" +
+
+          generateReason(
+            book.after
+          ) +
+
+        "</p>" +
+
+      "</div>";
+
+  });
+
+
+  document.getElementById(
+    "result"
+  ).innerHTML =
+    html;
+
+})
+
+
+// ========================================
+// books.json読み込みエラー
+// ========================================
+
+.catch(function(error) {
+
+
+  // 開発者確認用
+  console.error(
+    "books.json読み込みエラー:",
+    error
+  );
+
+
+  // 利用者向け
+  document.getElementById(
+    "result"
+  ).innerHTML =
+
+    '<div class="error-message">' +
+
+      "<h3>" +
+        "おすすめの本を読み込めませんでした" +
+      "</h3>" +
+
+      "<p>" +
+        "一時的にデータを読み込めなかった可能性があります。" +
+        "<br>" +
+        "ページを再読み込みして、もう一度お試しください。" +
+      "</p>" +
+
+      '<button ' +
+        'type="button" ' +
+        'class="reload-button" ' +
+        'onclick="location.reload()">' +
+
+        "ページを再読み込み" +
+
+      "</button>" +
+
+    "</div>";
+
+});
+
+</script>
+
+</body>
+
+</html>
