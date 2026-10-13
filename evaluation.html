@@ -1,11 +1,124 @@
-<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><link rel="stylesheet" href="style.css"><title>第1段階評価</title><script id="dev-helper">
-window.POMS_DEV=new URLSearchParams(location.search).get('dev')==='1';
-window.withDev=function(url){return window.POMS_DEV ? url+(url.includes('?')?'&':'?')+'dev=1' : url;};
-if(window.POMS_DEV){document.addEventListener('DOMContentLoaded',function(){var b=document.createElement('div');b.className='dev-banner';b.textContent='開発者モード：テスト回答は研究データ対象外です';document.body.prepend(b);});}
-</script></head><body><main class="survey-page"><h1>第1段階：推薦直後評価</h1><p>推薦結果とあらすじを参考に評価してください。すべての項目に回答してください。</p><form id="evalForm" novalidate><div id="bookEvaluations"></div><section class="survey-card"><h2>システム全体について</h2><p>推薦理由に納得できましたか？</p><div class="likert"><label><input type="radio" name="reason" value="1" required>1 まったくそう思わない</label><label><input type="radio" name="reason" value="2">2 あまり当てはまらない</label><label><input type="radio" name="reason" value="3">3 どちらともいえない</label><label><input type="radio" name="reason" value="4">4 やや当てはまる</label><label><input type="radio" name="reason" value="5">5 とてもそう思う</label></div><p>別の気分のときにも、この推薦システムを利用したいと思いますか？</p><div class="likert"><label><input type="radio" name="reuse" value="1" required>1 まったくそう思わない</label><label><input type="radio" name="reuse" value="2">2 あまり当てはまらない</label><label><input type="radio" name="reuse" value="3">3 どちらともいえない</label><label><input type="radio" name="reuse" value="4">4 やや当てはまる</label><label><input type="radio" name="reuse" value="5">5 とてもそう思う</label></div></section><button type="submit" class="survey-button">第1段階の回答を保存</button></form></main><script>
-const books=JSON.parse(localStorage.getItem("recommended_books")||"[]");
-const box=document.getElementById("bookEvaluations");
-if(!books.length){box.innerHTML='<p>推薦結果が見つかりません。トップページから診断を行ってください。</p>';}else{
- books.forEach((book,i)=>{const d=document.createElement('section');d.className='survey-card';d.innerHTML=`<h2>${i+1}位：${book.title}</h2><details class="book-summary"><summary>あらすじを確認する</summary><p>${book.summary}</p></details><p>この本は現在のあなたの気分に合っていると思いますか？</p><div class="likert"><label><input type="radio" name="${"fit"+i}" value="1" required>1 まったくそう思わない</label><label><input type="radio" name="${"fit"+i}" value="2">2 あまり当てはまらない</label><label><input type="radio" name="${"fit"+i}" value="3">3 どちらともいえない</label><label><input type="radio" name="${"fit"+i}" value="4">4 やや当てはまる</label><label><input type="radio" name="${"fit"+i}" value="5">5 とてもそう思う</label></div><p>この本を読んでみたいと思いますか？</p><div class="likert"><label><input type="radio" name="${"want"+i}" value="1" required>1 まったくそう思わない</label><label><input type="radio" name="${"want"+i}" value="2">2 あまり当てはまらない</label><label><input type="radio" name="${"want"+i}" value="3">3 どちらともいえない</label><label><input type="radio" name="${"want"+i}" value="4">4 やや当てはまる</label><label><input type="radio" name="${"want"+i}" value="5">5 とてもそう思う</label></div>`;box.appendChild(d);});}
-document.getElementById('evalForm').addEventListener('submit',e=>{e.preventDefault();if(!window.POMS_DEV&&!e.target.checkValidity()){e.target.reportValidity();return;}const fd=new FormData(e.target),ans={savedAt:new Date().toISOString(),mode:localStorage.getItem('recommendation_mode'),books:books.map((b,i)=>({title:b.title,fit:Number(fd.get('fit'+i)),want:Number(fd.get('want'+i))})),reason:Number(fd.get('reason')),reuse:Number(fd.get('reuse'))};localStorage.setItem('stage1_evaluation',JSON.stringify(ans));location.href=withDev('reading_status.html');});
-</script></body></html>
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>第1段階評価</title>
+    <script id="dev-helper">
+      window.POMS_DEV = new URLSearchParams(location.search).get("dev") === "1";
+      window.withDev = function (url) {
+        return window.POMS_DEV ? url + (url.includes("?") ? "&" : "?") + "dev=1" : url;
+      };
+
+      if (window.POMS_DEV) {
+        document.addEventListener("DOMContentLoaded", function () {
+          const banner = document.createElement("div");
+          banner.className = "dev-banner";
+          banner.textContent = "開発者モード：テスト回答は研究データ対象外です";
+          document.body.prepend(banner);
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <main class="survey-page">
+      <h1>第1段階：推薦直後評価</h1>
+      <p>推薦結果とあらすじを参考に評価してください。すべての項目に回答してください。</p>
+
+      <form id="evalForm" novalidate>
+        <div id="bookEvaluations"></div>
+
+        <section class="survey-card">
+          <h2>システム全体について</h2>
+
+          <p>推薦理由に納得できましたか？</p>
+          <div class="likert">
+            <label><input type="radio" name="reason" value="1" required />1 まったくそう思わない</label>
+            <label><input type="radio" name="reason" value="2" />2 あまり当てはまらない</label>
+            <label><input type="radio" name="reason" value="3" />3 どちらともいえない</label>
+            <label><input type="radio" name="reason" value="4" />4 やや当てはまる</label>
+            <label><input type="radio" name="reason" value="5" />5 とてもそう思う</label>
+          </div>
+
+          <p>別の気分のときにも、この推薦システムを利用したいと思いますか？</p>
+          <div class="likert">
+            <label><input type="radio" name="reuse" value="1" required />1 まったくそう思わない</label>
+            <label><input type="radio" name="reuse" value="2" />2 あまり当てはまらない</label>
+            <label><input type="radio" name="reuse" value="3" />3 どちらともいえない</label>
+            <label><input type="radio" name="reuse" value="4" />4 やや当てはまる</label>
+            <label><input type="radio" name="reuse" value="5" />5 とてもそう思う</label>
+          </div>
+        </section>
+
+        <button type="submit" class="survey-button">第1段階の回答を保存</button>
+      </form>
+    </main>
+
+    <script>
+      const books = JSON.parse(localStorage.getItem("recommended_books") || "[]");
+      const bookEvaluations = document.getElementById("bookEvaluations");
+
+      if (!books.length) {
+        bookEvaluations.innerHTML = "<p>推薦結果が見つかりません。トップページから診断を行ってください。</p>";
+      } else {
+        books.forEach((book, index) => {
+          const section = document.createElement("section");
+          section.className = "survey-card";
+          section.innerHTML = `
+            <h2>${index + 1}位：${book.title}</h2>
+            <details class="book-summary">
+              <summary>あらすじを確認する</summary>
+              <p>${book.summary}</p>
+            </details>
+
+            <p>この本は現在のあなたの気分に合っていると思いますか？</p>
+            <div class="likert">
+              <label><input type="radio" name="fit${index}" value="1" required />1 まったくそう思わない</label>
+              <label><input type="radio" name="fit${index}" value="2" />2 あまり当てはまらない</label>
+              <label><input type="radio" name="fit${index}" value="3" />3 どちらともいえない</label>
+              <label><input type="radio" name="fit${index}" value="4" />4 やや当てはまる</label>
+              <label><input type="radio" name="fit${index}" value="5" />5 とてもそう思う</label>
+            </div>
+
+            <p>この本を読んでみたいと思いますか？</p>
+            <div class="likert">
+              <label><input type="radio" name="want${index}" value="1" required />1 まったくそう思わない</label>
+              <label><input type="radio" name="want${index}" value="2" />2 あまり当てはまらない</label>
+              <label><input type="radio" name="want${index}" value="3" />3 どちらともいえない</label>
+              <label><input type="radio" name="want${index}" value="4" />4 やや当てはまる</label>
+              <label><input type="radio" name="want${index}" value="5" />5 とてもそう思う</label>
+            </div>
+          `;
+          bookEvaluations.appendChild(section);
+        });
+      }
+
+      document.getElementById("evalForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const form = event.target;
+
+        if (!window.POMS_DEV && !form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const formData = new FormData(form);
+        const answers = {
+          savedAt: new Date().toISOString(),
+          mode: localStorage.getItem("recommendation_mode"),
+          books: books.map((book, index) => ({
+            title: book.title,
+            fit: Number(formData.get(`fit${index}`)),
+            want: Number(formData.get(`want${index}`))
+          })),
+          reason: Number(formData.get("reason")),
+          reuse: Number(formData.get("reuse"))
+        };
+
+        localStorage.setItem("stage1_evaluation", JSON.stringify(answers));
+        location.href = withDev("reading_status.html");
+      });
+    </script>
+  </body>
+</html>
