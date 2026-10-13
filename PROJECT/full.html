@@ -200,7 +200,11 @@
 }
 </style>
 
-</head>
+<script id="dev-helper">
+window.POMS_DEV=new URLSearchParams(location.search).get('dev')==='1';
+window.withDev=function(url){return window.POMS_DEV ? url+(url.includes('?')?'&':'?')+'dev=1' : url;};
+if(window.POMS_DEV){document.addEventListener('DOMContentLoaded',function(){var b=document.createElement('div');b.className='dev-banner';b.textContent='開発者モード：テスト回答は研究データ対象外です';document.body.prepend(b);});}
+</script></head>
 
 
 <body>
@@ -622,7 +626,7 @@
                 optionData.text;
 
 
-              // 初期表示専用。プルダウンで選べるのは5択のみ
+              // 「選択してください」は初期表示専用。回答は5択のみ。
               if (optionData.value === "") {
                 option.disabled = true;
                 option.selected = true;
@@ -689,7 +693,7 @@
       });
 
       const errorMessage = document.getElementById("errorMessage");
-      if (unanswered.length > 0) {
+      if (unanswered.length > 0 && !window.POMS_DEV) {
         unanswered.forEach(function(index) {
           const select = document.getElementById("q" + index);
           if (select && select.parentElement) {
@@ -911,8 +915,7 @@
       // 結果ページへ
       // ===================================
 
-      window.location.href =
-        "result.html";
+      window.location.href = withDev("result.html");
 
     }
 

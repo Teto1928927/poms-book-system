@@ -116,7 +116,11 @@ button {
 }
 </style>
 
-</head>
+<script id="dev-helper">
+window.POMS_DEV=new URLSearchParams(location.search).get('dev')==='1';
+window.withDev=function(url){return window.POMS_DEV ? url+(url.includes('?')?'&':'?')+'dev=1' : url;};
+if(window.POMS_DEV){document.addEventListener('DOMContentLoaded',function(){var b=document.createElement('div');b.className='dev-banner';b.textContent='開発者モード：テスト回答は研究データ対象外です';document.body.prepend(b);});}
+</script></head>
 
 
 <body>
@@ -252,7 +256,7 @@ questions.forEach(function(q, i) {
     option.textContent =
       item[1];
 
-    // 初期表示専用。プルダウンで選べるのは5択のみ
+    // 「選択してください」は初期表示専用。回答は5択のみ。
     if (item[0] === "") {
       option.disabled = true;
       option.selected = true;
@@ -293,7 +297,7 @@ function recommend() {
       });
 
       const errorMessage = document.getElementById("errorMessage");
-      if (unanswered.length > 0) {
+      if (unanswered.length > 0 && !window.POMS_DEV) {
         unanswered.forEach(function(index) {
           const select = document.getElementById("q" + index);
           if (select && select.parentElement) {
@@ -337,6 +341,7 @@ function recommend() {
       document.getElementById(
         "q" + i
       ).value;
+    const effectiveValue = (value === "" && window.POMS_DEV) ? "2" : value;
 
 
     // 未入力
@@ -350,7 +355,7 @@ function recommend() {
     else {
 
       score[q.type] =
-        (Number(value) - 2) / 2;
+        (Number(effectiveValue) - 2) / 2;
 
     }
 
@@ -363,8 +368,7 @@ function recommend() {
   );
 
 
-  location.href =
-    "result_simple.html";
+  location.href = withDev("result_simple.html");
 
 }
 

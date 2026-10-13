@@ -41,8 +41,6 @@ select{
   border-radius:5px;
 }
 
-/* スマホ対応 */
-
 @media (max-width:767px){
 
   body{
@@ -75,6 +73,38 @@ select{
 }
 
 </style>
+
+<script id="dev-helper">
+window.POMS_DEV =
+  new URLSearchParams(location.search).get('dev') === '1';
+
+window.withDev = function(url){
+  return window.POMS_DEV
+    ? url + (url.includes('?') ? '&' : '?') + 'dev=1'
+    : url;
+};
+
+if(window.POMS_DEV){
+  document.addEventListener(
+    'DOMContentLoaded',
+    function(){
+
+      var b =
+        document.createElement('div');
+
+      b.className =
+        'dev-banner';
+
+      b.textContent =
+        '開発者モード：テスト回答は研究データ対象外です';
+
+      document.body.prepend(b);
+
+    }
+  );
+}
+</script>
+
 </head>
 
 <body>
@@ -103,16 +133,68 @@ select{
 
 <script>
 
+function generateParticipantId() {
+
+  const chars =
+    "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+  let id = "POMS-";
+
+  for (let block = 0; block < 2; block++) {
+
+    if (block > 0) {
+      id += "-";
+    }
+
+    for (let i = 0; i < 8; i++) {
+
+      id += chars.charAt(
+        Math.floor(
+          Math.random() * chars.length
+        )
+      );
+
+    }
+
+  }
+
+  return id;
+}
+
 function go(page){
 
-  let level = document.getElementById("level").value;
+  localStorage.clear();
 
-  localStorage.setItem("poms_level", level);
+  const level =
+    document.getElementById("level").value;
 
-  location.href = page;
+  localStorage.setItem(
+    "poms_level",
+    level
+  );
+
+  localStorage.setItem(
+    "recommendation_mode",
+    page.includes("simple")
+      ? "simple"
+      : "full"
+  );
+
+  const participantId =
+    generateParticipantId();
+
+  localStorage.setItem(
+    "participant_id",
+    participantId
+  );
+
+  location.href =
+    withDev(page);
+
 }
 
 </script>
 
 </body>
+
 </html>

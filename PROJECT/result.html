@@ -148,7 +148,11 @@
 
 </style>
 
-</head>
+<script id="dev-helper">
+window.POMS_DEV=new URLSearchParams(location.search).get('dev')==='1';
+window.withDev=function(url){return window.POMS_DEV ? url+(url.includes('?')?'&':'?')+'dev=1' : url;};
+if(window.POMS_DEV){document.addEventListener('DOMContentLoaded',function(){var b=document.createElement('div');b.className='dev-banner';b.textContent='開発者モード：テスト回答は研究データ対象外です';document.body.prepend(b);});}
+</script></head>
 
 
 <body>
@@ -168,6 +172,7 @@
   <div class="right-panel">
 
     <div id="result"></div>
+<div id="surveyArea"></div>
 
   </div>
 
@@ -570,24 +575,8 @@ fetch("books.json")
 
 
     // 読書レベルによる制限
-    if (
-      level === "easy" &&
-      book.level === "hard"
-    ) {
-
-      return null;
-
-    }
-
-
-    if (
-      level === "normal" &&
-      book.level === "hard"
-    ) {
-
-      return null;
-
-    }
+    if (level === "easy" && book.level !== "easy") return null;
+    if (level === "normal" && !["easy","normal"].includes(book.level)) return null;
 
 
     // ====================================
@@ -619,6 +608,9 @@ fetch("books.json")
 
       title:
         book.title,
+
+      summary:
+        book.summary || "紹介文は準備中です。",
 
       dist:
         calcDistance(after),
@@ -692,14 +684,13 @@ fetch("books.json")
         "</h3>" +
 
 
-        "<p>" +
-
-          generateReason(
-            book.after
-          ) +
-
+        '<p class="reason"><strong>おすすめ理由</strong><br>' +
+          generateReason(book.after) +
         "</p>" +
-
+        '<details class="book-summary">' +
+          '<summary>あらすじを見る</summary>' +
+          '<p>' + book.summary + '</p>' +
+        '</details>' +
       "</div>";
 
   });
@@ -709,6 +700,19 @@ fetch("books.json")
     "result"
   ).innerHTML =
     html;
+
+  const recommended = results.slice(0, 3).map(function(book) {
+    return { title: book.title, summary: book.summary };
+  });
+  localStorage.setItem("recommended_books", JSON.stringify(recommended));
+  localStorage.setItem("recommendation_mode", "full");
+
+  const surveyArea = document.getElementById("surveyArea");
+  if (surveyArea) {
+    surveyArea.innerHTML =
+      '<p class="survey-note">推薦結果を評価するため、必要に応じて各本の「あらすじを見る」を確認してからお進みください。</p>' +
+      '<a class="survey-button" href="' + withDev('evaluation.html') + '">第1段階：推薦結果を評価する</a>';
+  }
 
 })
 
